@@ -81,12 +81,15 @@ header_pyi = """\
 typing_imports = """\
 from __future__ import annotations
 
+import types
 from datetime import datetime, date
 from enum import IntEnum, IntFlag, auto
 from typing import (
     Any,
     Callable,
     Generic,
+    Literal,
+    NewType,
     Optional,
     TypeVar,
     Union,
@@ -97,6 +100,12 @@ try:
     from typing import ParamSpec, TypeAlias
 except ImportError:
     from typing_extensions import ParamSpec, TypeAlias
+
+try:
+    # Self was added in python 3.11
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 _TwoInts: TypeAlias = tuple[int, int]
 _ThreeInts: TypeAlias = tuple[int, int, int]
@@ -322,9 +331,9 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
             return
 
         # If it's not a template instantiation, or has not been flagged by
-        # the tweaker script that it should be treated as a class, then just
+        # the tweaker script that it should be treated as a class or a NewType, then just
         # ignore the typedef and return.
-        if not ('<' in typedef.type and '>' in typedef.type) and not typedef.docAsClass:
+        if not ('<' in typedef.type and '>' in typedef.type) and not typedef.docAsClass and not typedef.docAsNewType:
             return
 
         # Otherwise write a mock class for it that combines the template and class.
@@ -340,6 +349,18 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
             bases = (self.fixWxPrefix(b, True) for b in bases)
             bases = [b.replace('*', '') for b in bases] # fix for RichTextLine*
             name = self.fixWxPrefix(typedef.name)
+        elif typedef.docAsNewType:
+            name = self.fixWxPrefix(typedef.name)
+            type = self.fixWxPrefix(typedef.type)
+            # NewType is imported at the top in the `typing_imports` section
+            stream.write('\n')
+            stream.write('%s%s = NewType("%s", %s)\n' % (indent, name, name, type))
+            if typedef.briefDoc:
+                indent2 = indent + ' ' * 4
+                stream.write('%s"""\n' % indent2)
+                stream.write(nci(typedef.briefDoc, len(indent2)))
+                stream.write('%s"""\n' % indent2)
+            return
 
         # Now write the Python equivalent class for the typedef
         if not bases:
@@ -374,7 +395,11 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
         assert isinstance(pf, extractors.PyFunctionDef)
         stream.write('\n')
         if pf.deprecated:
-            stream.write('%s@wx.deprecated\n' % indent)
+            # We don't need the wx prefix if we are in core itself
+            if self.isCore:
+                stream.write('%s@deprecated\n' % indent)
+            else:
+                stream.write('%s@wx.deprecated\n' % indent)
         if pf.isStatic:
             stream.write('%s@staticmethod\n' % indent)
         stream.write('%sdef %s%s:\n' % (indent, pf.name, pf.argsString))
@@ -388,10 +413,14 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
     #-----------------------------------------------------------------------
     def generatePyClass(self, pc, stream, indent=''):
         assert isinstance(pc, extractors.PyClassDef)
-
+        stream.write('\n')
         # write the class declaration and docstring
         if pc.deprecated:
-            stream.write('%s@wx.deprecated\n' % indent)
+            # We don't need the wx prefix if we are in core itself
+            if self.isCore:
+                stream.write('%s@deprecated\n' % indent)
+            else:
+                stream.write('%s@wx.deprecated\n' % indent)
         stream.write('%sclass %s' % (indent, pc.name))
         if pc.bases:
             stream.write('(%s):\n' % ', '.join(pc.bases))
@@ -422,6 +451,7 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
         assert isinstance(function, extractors.FunctionDef)
         if not function.pyName:
             return
+        stream.write('\n')
         if not is_overload and function.hasOverloads():
             for f in function.overloads:
                 self.generateFunction(f, stream, True)
@@ -436,6 +466,8 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
         if is_overload:
             stream.write('    ...\n')
         else:
+            # Docstring on next line
+            stream.write('\n')
             stream.write('    """\n')
             stream.write(nci(function.pyDocstring, 4))
             stream.write('    """\n')

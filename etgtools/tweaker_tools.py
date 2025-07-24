@@ -293,6 +293,16 @@ class FixWxPrefix(object):
     def register_autoconversion(cls, class_name: str, convertables: tuple[str, ...]) -> None:
         cls._auto_conversions[class_name] = convertables
 
+    @classmethod
+    def get_auto_conversions(cls, type: str) -> tuple[str, ...]:
+        """Returns auto convertible types for given type.
+
+        Removes wx prefix if present. 
+        """
+        if type.startswith('wx.'):
+            type = type[3:]
+        return cls._auto_conversions.get(type, ())
+
     def fixWxPrefix(self, name, checkIsCore=False):
         # By default remove the wx prefix like normal
         name = removeWxPrefix(name)
@@ -430,7 +440,7 @@ class FixWxPrefix(object):
                 return f'list[{type_name}]'
             else:
                 return 'list'
-        allowed_types = self._auto_conversions.get(type_name, ())
+        allowed_types = self.get_auto_conversions(type_name)
         if allowed_types and is_input:
             allowed_types = (
                 type_name,
@@ -1067,7 +1077,7 @@ def addGetIMMethodTemplate(module, klass, fields):
         del namedtuple
         """.format(name=name, fields=str(fields)))
 
-    klass.addPyMethod('GetIM', '(self)',
+    klass.addPyMethod('GetIM', '(self) -> _im_{name}'.format(name=name),
         doc="""\
             Returns an immutable representation of the ``wx.{name}`` object, based on ``namedtuple``.
 
@@ -1663,11 +1673,17 @@ def guessTypeInt(v):
         return True
     type = v.type.replace('const', '')
     type = type.replace(' ', '')
-    if type in ['int', 'long', 'byte', 'size_t', 'wxCoord', 'wxEventType']:
+    if type in ['int', 'long', 'byte', 'size_t', 'wxCoord']:
         return True
     if 'unsigned' in type:
         return True
     return False
+
+
+def guessTypeEventType(v):
+    type = v.type.replace('const', '')
+    type = type.replace(' ', '')
+    return type == 'wxEventType'
 
 
 def guessTypeFloat(v):

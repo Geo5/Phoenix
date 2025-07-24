@@ -269,7 +269,7 @@ def run():
     module.addInclude(INCLUDES)
     module.includePyCode('src/core_ex.py', order=10)
 
-    module.addPyFunction('version', '()',
+    module.addPyFunction('version', '() -> str',
         doc="""Returns a string containing version and port info""",
         body="""\
             if wx.Port == '__WXMSW__':

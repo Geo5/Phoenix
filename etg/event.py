@@ -100,13 +100,16 @@ def run():
     #endif
     """)
 
+    # Create the wxEventType typedef as python NewType
+    item = module.find('wxEventType')
+    item.docAsNewType = True
 
     module.addPyClass('PyEventBinder', ['object'],
         doc="""\
             Instances of this class are used to bind specific events to event handlers.
             """,
         items=[
-            PyFunctionDef('__init__', '(self, evtType, expectedIDs=0)',
+            PyFunctionDef('__init__', '(self, evtType: Union[EventType, tuple[EventType, ...], list[EventType]], expectedIDs: Literal[0, 1, 2] = 0) -> None',
                 body="""\
                     if expectedIDs not in [0, 1, 2]:
                         raise ValueError("Invalid number of expectedIDs")
@@ -118,14 +121,14 @@ def run():
                         self.evtType = [evtType]
                     """),
 
-            PyFunctionDef('Bind', '(self, target, id1, id2, function)',
+            PyFunctionDef('Bind', '(self, target: EventHandler, id1: int, id2: int, function: Optional[Callable[[Event], None]]) -> None',
                 doc="""Bind this set of event types to target using its Connect() method.""",
                 body="""\
                     for et in self.evtType:
                         target.Connect(id1, id2, et, function)
                     """),
 
-            PyFunctionDef('Unbind', '(self, target, id1, id2, handler=None)',
+            PyFunctionDef('Unbind', '(self, target: EventHandler, id1: int, id2: int, handler: Optional[Callable[[Event], None]] = None) -> bool',
                 doc="""Remove an event binding.""",
                 body="""\
                     success = 0
@@ -134,7 +137,7 @@ def run():
                     return success != 0
                     """),
 
-            PyFunctionDef('_getEvtType', '(self)',
+            PyFunctionDef('_getEvtType', '(self) -> EventType',
                 doc="""\
                     Make it easy to get to the default wxEventType typeID for this
                     event binder.
@@ -142,8 +145,8 @@ def run():
                 body="""return self.evtType[0]"""),
 
             PyPropertyDef('typeId', '_getEvtType'),
-
-            PyFunctionDef('__call__', '(self, *args)',
+            # Type hints could be better, but since it is deprecated anyways, it might not be worth it.
+            PyFunctionDef('__call__', '(self, *args: Any) -> None',
                 deprecated="Use :meth:`EvtHandler.Bind` instead.",
                 doc="""\
                     For backwards compatibility with the old ``EVT_*`` functions.
@@ -292,7 +295,7 @@ def run():
     c.find('ProcessPendingEvents').releaseGIL()
 
 
-    c.addPyMethod('Bind', '(self, event, handler, source=None, id=wx.ID_ANY, id2=wx.ID_ANY)',
+    c.addPyMethod('Bind', '(self, event: PyEventBinder, handler: Optional[Callable[[Event], None]], source: Optional[Window] = None, id: int = wx.ID_ANY, id2: int = wx.ID_ANY) -> None',
         doc="""\
             Bind an event to an event handler.
 
@@ -312,7 +315,7 @@ def run():
                            between the same event type from different
                            controls.
 
-            :param id: Used to spcify the event source by ID instead
+            :param id: Used to specify the event source by ID instead
                        of instance.
 
             :param id2: Used when it is desirable to bind a handler
@@ -328,7 +331,7 @@ def run():
             """)
 
 
-    c.addPyMethod('Unbind', '(self, event, source=None, id=wx.ID_ANY, id2=wx.ID_ANY, handler=None)',
+    c.addPyMethod('Unbind', '(self, event: PyEventBinder, source: Optional[Window] = None, id: int = wx.ID_ANY, id2: int = wx.ID_ANY, handler: Optional[Callable[[Event], None]] = None) -> bool',
         doc="""\
             Disconnects the event handler binding for event from `self`.
             Returns ``True`` if successful.
@@ -373,10 +376,10 @@ def run():
     c.find('SetClientData').ignore()
     c.find('GetClientObject').pyName = 'GetClientData'
     c.find('SetClientObject').pyName = 'SetClientData'
-    c.addPyMethod('GetClientObject', '(self)',
+    c.addPyMethod('GetClientObject', '(self) -> ClientData',
         doc="Alias for :meth:`GetClientData`",
         body="return self.GetClientData()")
-    c.addPyMethod('SetClientObject', '(self, data)',
+    c.addPyMethod('SetClientObject', '(self, data: ClientData) -> None',
         doc="Alias for :meth:`SetClientData`",
         body="self.SetClientData(data)")
     c.addPyProperty('ClientData GetClientData SetClientData')
@@ -631,21 +634,21 @@ def run():
     #---------------------------------------
     # wxEventBlocker
     c = module.find('wxEventBlocker')
-    c.addPyMethod('__enter__', '(self)', 'return self')
-    c.addPyMethod('__exit__', '(self, exc_type, exc_val, exc_tb)', 'return False')
+    c.addPyMethod('__enter__', '(self) -> Self', 'return self')
+    c.addPyMethod('__exit__', '(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType) -> bool', 'return False')
 
     #---------------------------------------
     # wxPropagationDisabler
     c = module.find('wxPropagationDisabler')
-    c.addPyMethod('__enter__', '(self)', 'return self')
-    c.addPyMethod('__exit__', '(self, exc_type, exc_val, exc_tb)', 'return False')
+    c.addPyMethod('__enter__', '(self) -> Self', 'return self')
+    c.addPyMethod('__exit__', '(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType) -> bool', 'return False')
     c.addPrivateCopyCtor()
 
     #---------------------------------------
     # wxPropagateOnce
     c = module.find('wxPropagateOnce')
-    c.addPyMethod('__enter__', '(self)', 'return self')
-    c.addPyMethod('__exit__', '(self, exc_type, exc_val, exc_tb)', 'return False')
+    c.addPyMethod('__enter__', '(self) -> Self', 'return self')
+    c.addPyMethod('__exit__', '(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType) -> bool', 'return False')
     c.addPrivateCopyCtor()
 
     #-----------------------------------------------------------------

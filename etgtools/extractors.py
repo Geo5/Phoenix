@@ -20,7 +20,7 @@ import xml.etree.ElementTree as ET
 import copy
 
 from .tweaker_tools import AutoConversionInfo, FixWxPrefix, MethodType, magicMethods, \
-                           guessTypeInt, guessTypeFloat, guessTypeStr, \
+                           guessTypeInt, guessTypeEventType, guessTypeFloat, guessTypeStr, \
                            textfile_open, Signature, removeWxPrefix
 from sphinxtools.utilities import findDescendants
 
@@ -240,6 +240,7 @@ class TypedefDef(VariableDef):
         super(TypedefDef, self).__init__()
         self.noTypeName = False
         self.docAsClass = False
+        self.docAsNewType = False
         self.bases = []
         self.protection = 'public'
         self.__dict__.update(**kw)
@@ -1493,8 +1494,11 @@ class ModuleDef(BaseDef):
         for item in self.items:
             if isinstance(item, (ClassDef, FunctionDef)):
                 two.append(item)
+            # We have a special case for wxEventType, as the typedef gets converted to a python NewType
+            elif isinstance(item, TypedefDef) and item.name == 'wxEventType':
+                one.append(item)
             elif isinstance(item, GlobalVarDef) and (
-                     guessTypeInt(item) or guessTypeFloat(item) or guessTypeStr(item)):
+                     guessTypeInt(item) or guessTypeEventType(item) or guessTypeFloat(item) or guessTypeStr(item)):
                 one.append(item)
             elif isinstance(item, GlobalVarDef):
                 three.append(item)

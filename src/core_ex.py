@@ -1,4 +1,5 @@
 import sys as _sys
+import typing
 
 # Load version numbers from __version__ and some other initialization tasks...
 if 'wxEVT_NULL' in dir():
@@ -33,7 +34,10 @@ warnings.simplefilter('default', wxPyDeprecationWarning)
 del warnings
 
 
-def deprecated(item, msg='', useName=False):
+_T = typing.TypeVar('_T', typing.Callable, type)
+
+
+def deprecated(item: _T, msg: str = '', useName: bool = False) -> _T:
     """
     Create a delegating wrapper that raises a deprecation warning.  Can be
     used with callable objects (functions, methods, classes) or with
@@ -103,7 +107,7 @@ def deprecated(item, msg='', useName=False):
         raise TypeError("unsupported type %s" % type(item))
 
 
-def deprecatedMsg(msg):
+def deprecatedMsg(msg: str) -> typing.Callable[[typing.Any], typing.Any]:
     """
     A wrapper for the deprecated decorator that makes it easier to attach a
     custom message to the warning that is raised if the item is used. This

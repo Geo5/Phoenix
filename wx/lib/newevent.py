@@ -10,6 +10,7 @@
 #
 # Tags:        phoenix-port, documented
 #---------------------------------------------------------------------------
+from __future__ import annotations
 
 """
 Easy generation of new events classes and binder objects.
@@ -109,7 +110,7 @@ import wx
 
 #---------------------------------------------------------------------------
 
-def NewEvent():
+def NewEvent() -> tuple[wx.PyEvent, wx.PyEventBinder]:
     """
     Generates a new `(event, binder)` tuple.
 
@@ -130,7 +131,7 @@ def NewEvent():
     return _Event, wx.PyEventBinder(evttype)
 
 
-def NewCommandEvent():
+def NewCommandEvent() -> tuple[wx.PyCommandEvent, wx.PyEventBinder]:
     """
     Generates a new `(command_event, binder)` tuple.
 

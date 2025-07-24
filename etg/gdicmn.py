@@ -114,12 +114,12 @@ def run():
 
 
     # Add sequence protocol methods and other goodies
-    c.addPyMethod('__str__', '(self)',             'return str(self.Get())')
-    c.addPyMethod('__repr__', '(self)',            'return "wx.Point"+str(self.Get())')
-    c.addPyMethod('__len__', '(self)',             'return len(self.Get())')
-    c.addPyMethod('__reduce__', '(self)',          'return (Point, self.Get())')
-    c.addPyMethod('__getitem__', '(self, idx)',    'return self.Get()[idx]')
-    c.addPyMethod('__setitem__', '(self, idx, val)',
+    c.addPyMethod('__str__', '(self) -> str',             'return str(self.Get())')
+    c.addPyMethod('__repr__', '(self) -> str',            'return "wx.Point"+str(self.Get())')
+    c.addPyMethod('__len__', '(self) -> Literal[2]',      'return len(self.Get())')
+    c.addPyMethod('__reduce__', '(self) -> tuple[type[Point], _TwoInts]', 'return (Point, self.Get())')
+    c.addPyMethod('__getitem__', '(self, idx: Literal[0, 1]) -> int', 'return self.Get()[idx]')
+    c.addPyMethod('__setitem__', '(self, idx: Literal[0, 1], val: int) -> None',
                   """\
                   if idx == 0: self.x = val
                   elif idx == 1: self.y = val
@@ -190,14 +190,14 @@ def run():
     tools.addGetIMMethodTemplate(module, c, ['width', 'height'])
 
     # Add sequence protocol methods and other goodies
-    c.addPyMethod('__str__', '(self)',             'return str(self.Get())')
-    c.addPyMethod('__repr__', '(self)',            'return "wx.Size"+str(self.Get())')
-    c.addPyMethod('__len__', '(self)',             'return len(self.Get())')
-    c.addPyMethod('__nonzero__', '(self)',         'return self.Get() != (0,0)')
-    c.addPyMethod('__bool__', '(self)',            'return self.Get() != (0,0)')
-    c.addPyMethod('__reduce__', '(self)',          'return (Size, self.Get())')
-    c.addPyMethod('__getitem__', '(self, idx)',    'return self.Get()[idx]')
-    c.addPyMethod('__setitem__', '(self, idx, val)',
+    c.addPyMethod('__str__', '(self) -> str',             'return str(self.Get())')
+    c.addPyMethod('__repr__', '(self) -> str',            'return "wx.Size"+str(self.Get())')
+    c.addPyMethod('__len__', '(self) -> Literal[2]',      'return len(self.Get())')
+    c.addPyMethod('__nonzero__', '(self) -> bool',        'return self.Get() != (0,0)')
+    c.addPyMethod('__bool__', '(self) -> bool',           'return self.Get() != (0,0)')
+    c.addPyMethod('__reduce__', '(self) -> tuple[type[Size], _TwoInts]', 'return (Size, self.Get())')
+    c.addPyMethod('__getitem__', '(self, idx: Literal[0, 1]) -> int', 'return self.Get()[idx]')
+    c.addPyMethod('__setitem__', '(self, idx: Literal[0, 1], val: int) -> None',
                   """\
                   if idx == 0: self.width = val
                   elif idx == 1: self.height = val
@@ -272,14 +272,14 @@ def run():
     tools.addGetIMMethodTemplate(module, c, ['x', 'y', 'width', 'height'])
 
     # Add sequence protocol methods and other goodies
-    c.addPyMethod('__str__', '(self)',             'return str(self.Get())')
-    c.addPyMethod('__repr__', '(self)',            'return "wx.Rect"+str(self.Get())')
-    c.addPyMethod('__len__', '(self)',             'return len(self.Get())')
-    c.addPyMethod('__nonzero__', '(self)',         'return self.Get() != (0,0,0,0)')
-    c.addPyMethod('__bool__', '(self)',            'return self.Get() != (0,0,0,0)')
-    c.addPyMethod('__reduce__', '(self)',          'return (Rect, self.Get())')
-    c.addPyMethod('__getitem__', '(self, idx)',    'return self.Get()[idx]')
-    c.addPyMethod('__setitem__', '(self, idx, val)',
+    c.addPyMethod('__str__', '(self) -> str',             'return str(self.Get())')
+    c.addPyMethod('__repr__', '(self) -> str',            'return "wx.Rect"+str(self.Get())')
+    c.addPyMethod('__len__', '(self) -> Literal[4]',      'return len(self.Get())')
+    c.addPyMethod('__nonzero__', '(self) -> bool',        'return self.Get() != (0,0,0,0)')
+    c.addPyMethod('__bool__', '(self) -> bool',           'return self.Get() != (0,0,0,0)')
+    c.addPyMethod('__reduce__', '(self) -> tuple[type[Rect], _FourInts]', 'return (Rect, self.Get())')
+    c.addPyMethod('__getitem__', '(self, idx: Literal[0, 1, 2, 3]) -> int', 'return self.Get()[idx]')
+    c.addPyMethod('__setitem__', '(self, idx: Literal[0, 1, 2, 3], val: int) -> None',
                   """\
                   if idx == 0: self.x = val
                   elif idx == 1: self.y = val
@@ -334,14 +334,14 @@ def run():
     tools.addGetIMMethodTemplate(module, c, ['x', 'y'])
 
     # Add sequence protocol methods and other goodies
-    c.addPyMethod('__str__', '(self)',             'return str(self.Get())')
-    c.addPyMethod('__repr__', '(self)',            'return "wx.RealPoint"+str(self.Get())')
-    c.addPyMethod('__len__', '(self)',             'return len(self.Get())')
-    c.addPyMethod('__nonzero__', '(self)',         'return self.Get() != (0,0)')
-    c.addPyMethod('__bool__', '(self)',            'return self.Get() != (0,0)')
-    c.addPyMethod('__reduce__', '(self)',          'return (RealPoint, self.Get())')
-    c.addPyMethod('__getitem__', '(self, idx)',    'return self.Get()[idx]')
-    c.addPyMethod('__setitem__', '(self, idx, val)',
+    c.addPyMethod('__str__', '(self) -> str',             'return str(self.Get())')
+    c.addPyMethod('__repr__', '(self) -> str',            'return "wx.RealPoint"+str(self.Get())')
+    c.addPyMethod('__len__', '(self) -> Literal[2]',      'return len(self.Get())')
+    c.addPyMethod('__nonzero__', '(self) -> bool',        'return self.Get() != (0,0)')
+    c.addPyMethod('__bool__', '(self) -> bool',           'return self.Get() != (0,0)')
+    c.addPyMethod('__reduce__', '(self) -> tuple[type[RealPoint], _TwoFloats]', 'return (RealPoint, self.Get())')
+    c.addPyMethod('__getitem__', '(self, idx: Literal[0, 1]) -> float', 'return self.Get()[idx]')
+    c.addPyMethod('__setitem__', '(self, idx: Literal[0, 1], val: float) -> None',
                   """\
                   if idx == 0: self.x = val
                   elif idx == 1: self.y = val
@@ -354,7 +354,7 @@ def run():
 
     c = module.find('wxColourDatabase')
     c.mustHaveApp()
-    c.addPyMethod('FindColour', '(self, colour)',    'return self.Find(colour)')
+    c.addPyMethod('FindColour', '(self, colour: str) -> Colour',    'return self.Find(colour)')
 
     module.find('wxTheColourDatabase').ignore()
 
