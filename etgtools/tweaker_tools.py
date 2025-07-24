@@ -432,7 +432,12 @@ class FixWxPrefix(object):
                 return 'list'
         allowed_types = self._auto_conversions.get(type_name, ())
         if allowed_types and is_input:
-            allowed_types = (type_name, *(self.cleanType(t) for t in allowed_types))
+            allowed_types = (
+                type_name,
+                # Special case None here, as it already is a clean type in this context and
+                # otherwise a underscore is added.
+                *(t if t == 'None' else self.cleanType(t) for t in allowed_types),
+            )
             type_name = f"Union[{', '.join(allowed_types)}]"
         return type_map.get(type_name, type_name)
     
