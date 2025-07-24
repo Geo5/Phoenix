@@ -20,7 +20,7 @@ import re
 import sys, os
 import copy
 import textwrap
-from typing import Final, NamedTuple, Optional, Tuple, Union
+from typing import Final, NamedTuple, Optional, Union
 
 
 isWindows = sys.platform.startswith('win')
@@ -42,7 +42,7 @@ magicMethods = {
 
 
 class AutoConversionInfo(NamedTuple):
-    convertables: Tuple[str, ...] # String type-hints for each of the types that can be automatically converted to this class
+    convertables: tuple[str, ...] # String type-hints for each of the types that can be automatically converted to this class
     code: str                     # Code that will be added to SIP for this conversion
 
 
@@ -250,7 +250,7 @@ def removeWxPrefix(name):
 _AUTO_CONVERSION_CACHE_FILE: Final = '__auto_conversion_cache__.json'
 
 
-def load_auto_conversions(destFile: Optional[str] = None) -> dict[str, Tuple[str, ...]]:
+def load_auto_conversions(destFile: str | None = None) -> dict[str, tuple[str, ...]]:
     """Load FixWxPrefix auto conversions from cache file if it exists."""
     import json
     if not destFile:
@@ -272,7 +272,7 @@ class FixWxPrefix(object):
     """
 
     _coreTopLevelNames = None
-    _auto_conversions: dict[str, Tuple[str, ...]] = load_auto_conversions()
+    _auto_conversions: dict[str, tuple[str, ...]] = load_auto_conversions()
 
     @classmethod
     def cache_auto_conversions(cls, destFile: Optional[str] = None) -> None:
@@ -290,7 +290,7 @@ class FixWxPrefix(object):
             json.dump(FixWxPrefix._auto_conversions, f)
 
     @classmethod
-    def register_autoconversion(cls, class_name: str, convertables: Tuple[str, ...]) -> None:
+    def register_autoconversion(cls, class_name: str, convertables: tuple[str, ...]) -> None:
         cls._auto_conversions[class_name] = convertables
 
     def fixWxPrefix(self, name, checkIsCore=False):
@@ -423,11 +423,11 @@ class FixWxPrefix(object):
         if type_name.startswith('Vector<') and type_name.endswith('>'):
             # Special handling for 'Vector<type>' types
             type_name = self.cleanType(type_name[7:-1])
-            return f'List[{type_name}]'
+            return f'list[{type_name}]'
         if type_name.startswith('Array'):
             type_name = self.cleanType(type_name[5:])
             if type_name:
-                return f'List[{type_name}]'
+                return f'list[{type_name}]'
             else:
                 return 'list'
         allowed_types = self._auto_conversions.get(type_name, ())
@@ -436,7 +436,7 @@ class FixWxPrefix(object):
             type_name = f"Union[{', '.join(allowed_types)}]"
         return type_map.get(type_name, type_name)
     
-    def parseNameAndType(self, name_string: str, type_string: Optional[str], is_input: bool = False) -> Tuple[str, Optional[str]]:
+    def parseNameAndType(self, name_string: str, type_string: Optional[str], is_input: bool = False) -> tuple[str, Optional[str]]:
         """Given an identifier name and an optional type annotation, process
         these per cleanName and cleanType. Further performs transforms on the
         identifier name that may be required due to the type annotation.

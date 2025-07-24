@@ -290,17 +290,12 @@ def run():
             return "%s %s (phoenix) %s" % (wx.VERSION_STRING, port, wx.wxWidgets_version)
             """)
 
-
-    module.addPyCode('import typing', order=10)
+    # We don't need to import typing here, as a general typing import block is added in pi_generator.py
     module.addPyCode("""\
-        _T = typing.TypeVar('_T')
-        try:
-            _P = typing.ParamSpec('_P')
-        except AttributeError:
-            import typing_extensions
-            _P = typing_extensions.ParamSpec('_P')
+        _T = TypeVar('_T')
+        _P = ParamSpec('_P')
         """)
-    module.addPyFunction('CallAfter', '(callableObj: typing.Callable[_P, _T], *args: _P.args, **kw: _P.kwargs) -> None', doc="""\
+    module.addPyFunction('CallAfter', '(callableObj: Callable[_P, _T], *args: _P.args, **kw: _P.kwargs) -> None', doc="""\
             Call the specified function after the current and pending event
             handlers have been completed.  This is also good for making GUI
             method calls from non-GUI threads.  Any extra positional or
@@ -331,7 +326,7 @@ def run():
             wx.PostEvent(app, evt)""")
 
 
-    module.addPyClass('CallLater', ['typing.Generic[_P, _T]'],
+    module.addPyClass('CallLater', ['Generic[_P, _T]'],
         doc="""\
             A convenience class for :class:`wx.Timer`, that calls the given callable
             object once after the given amount of milliseconds, passing any
@@ -351,7 +346,7 @@ def run():
             """,
         items = [
             PyCodeDef('__instances = {}'),
-            PyFunctionDef('__init__', '(self, millis, callableObj: typing.Callable[_P, _T], *args: _P.args, **kwargs: _P.kwargs) -> None',
+            PyFunctionDef('__init__', '(self, millis, callableObj: Callable[_P, _T], *args: _P.args, **kwargs: _P.kwargs) -> None',
                 doc="""\
                     Constructs a new :class:`wx.CallLater` object.
 
@@ -375,7 +370,7 @@ def run():
 
             PyFunctionDef('__del__', '(self)', 'self.Stop()'),
 
-            PyFunctionDef('Start', '(self, millis: typing.Optional[int]=None, *args: _P.args, **kwargs: _P.kwargs) -> None',
+            PyFunctionDef('Start', '(self, millis: Optional[int] = None, *args: _P.args, **kwargs: _P.kwargs) -> None',
                 doc="""\
                     (Re)start the timer
 

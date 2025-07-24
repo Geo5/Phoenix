@@ -549,7 +549,7 @@ class FunctionDef(BaseDef, FixWxPrefix):
         elif len(returns) == 1:
             return_type = returns[0]
         else:
-            return_type = f"Tuple[{', '.join(returns)}]"
+            return_type = f"tuple[{', '.join(returns)}]"
         kind = MethodType.STATIC_METHOD if getattr(self, 'isStatic', False) else type(self)._default_method_type
         self.signature = Signature(name, *params, return_type=return_type, method_type=kind)
         self.pyArgsString = self.signature.args_string(False)

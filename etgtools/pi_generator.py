@@ -80,21 +80,29 @@ header_pyi = """\
 
 typing_imports = """\
 from __future__ import annotations
+
 from datetime import datetime, date
 from enum import IntEnum, IntFlag, auto
-from typing import (Any, overload, TypeAlias, Generic,
-    Union, Optional, List, Tuple, Callable
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    Optional,
+    TypeAlias,
+    TypeVar,
+    Union,
+    overload,
 )
 try:
     from typing import ParamSpec
 except ImportError:
     from typing_extensions import ParamSpec
 
-_TwoInts: TypeAlias = Tuple[int, int]
-_ThreeInts: TypeAlias = Tuple[int, int, int]
-_FourInts: TypeAlias = Tuple[int, int, int, int]
-_TwoFloats: TypeAlias = Tuple[float, float]
-_FourFloats: TypeAlias = Tuple[float, float, float, float]
+_TwoInts: TypeAlias = tuple[int, int]
+_ThreeInts: TypeAlias = tuple[int, int, int]
+_FourInts: TypeAlias = tuple[int, int, int, int]
+_TwoFloats: TypeAlias = tuple[float, float]
+_FourFloats: TypeAlias = tuple[float, float, float, float]
 
 """
 
