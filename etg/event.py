@@ -635,20 +635,20 @@ def run():
     # wxEventBlocker
     c = module.find('wxEventBlocker')
     c.addPyMethod('__enter__', '(self) -> Self', 'return self')
-    c.addPyMethod('__exit__', '(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType) -> bool', 'return False')
+    c.addPyMethod('__exit__', '(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None) -> bool', 'return False')
 
     #---------------------------------------
     # wxPropagationDisabler
     c = module.find('wxPropagationDisabler')
     c.addPyMethod('__enter__', '(self) -> Self', 'return self')
-    c.addPyMethod('__exit__', '(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType) -> bool', 'return False')
+    c.addPyMethod('__exit__', '(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None) -> bool', 'return False')
     c.addPrivateCopyCtor()
 
     #---------------------------------------
     # wxPropagateOnce
     c = module.find('wxPropagateOnce')
     c.addPyMethod('__enter__', '(self) -> Self', 'return self')
-    c.addPyMethod('__exit__', '(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType) -> bool', 'return False')
+    c.addPyMethod('__exit__', '(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None) -> bool', 'return False')
     c.addPrivateCopyCtor()
 
     #-----------------------------------------------------------------
