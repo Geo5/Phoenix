@@ -88,15 +88,15 @@ from typing import (
     Callable,
     Generic,
     Optional,
-    TypeAlias,
     TypeVar,
     Union,
     overload,
 )
 try:
-    from typing import ParamSpec
+    # ParamSpec and TypeAlias were added in python 3.10
+    from typing import ParamSpec, TypeAlias
 except ImportError:
-    from typing_extensions import ParamSpec
+    from typing_extensions import ParamSpec, TypeAlias
 
 _TwoInts: TypeAlias = tuple[int, int]
 _ThreeInts: TypeAlias = tuple[int, int, int]
