@@ -96,11 +96,10 @@ from typing import (
     overload,
 )
 try:
-    # ParamSpec and TypeAlias were added in python 3.10
-    from typing import ParamSpec, TypeAlias
+    # TypeAlias was added in python 3.10
+    from typing import TypeAlias
 except ImportError:
-    from typing_extensions import ParamSpec, TypeAlias
-
+    from typing_extensions import TypeAlias
 try:
     # Self was added in python 3.11
     from typing import Self

@@ -290,7 +290,18 @@ def run():
             return "%s %s (phoenix) %s" % (wx.VERSION_STRING, port, wx.wxWidgets_version)
             """)
 
-    # We don't need to import typing here, as a general typing import block is added in pi_generator.py
+    # We do need to import typing here, as a few things also need to be available at runtime in core.py
+    # The typing imports added by pi_generator.py are only available in .pyi files.
+    module.addPyCode("""
+        from typing import Callable, Generic, Optional TypeVar
+        try:
+            # ParamSpec was added in python 3.10
+            from typing import ParamSpec
+        except ImportError:
+            from typing_extensions import ParamSpec
+""",
+        order=10,
+    )
     module.addPyCode("""\
         _T = TypeVar('_T')
         _P = ParamSpec('_P')

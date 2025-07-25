@@ -295,7 +295,15 @@ def run():
     c.find('ProcessPendingEvents').releaseGIL()
 
 
-    c.addPyMethod('Bind', '(self, event: PyEventBinder, handler: Optional[Callable[[Event], None]], source: Optional[Window] = None, id: int = wx.ID_ANY, id2: int = wx.ID_ANY) -> None',
+    module.addPyCode('''
+class _HasGetId(typing.Protocol):
+    """This is just used for type hinting the Bind(...) and similar functions `source` parameter."""
+
+    def GetId(self) -> int: ...
+''', order=10)
+    # We keep the explicit Window annotation for the source parameter although window also conforms
+    # to the _HasGetId protocol to not confuse user too much (hopefully).
+    c.addPyMethod('Bind', '(self, event: PyEventBinder, handler: Optional[Callable[[Event], None]], source: Optional[Window, _HasGetId] = None, id: int = wx.ID_ANY, id2: int = wx.ID_ANY) -> None',
         doc="""\
             Bind an event to an event handler.
 
@@ -331,7 +339,7 @@ def run():
             """)
 
 
-    c.addPyMethod('Unbind', '(self, event: PyEventBinder, source: Optional[Window] = None, id: int = wx.ID_ANY, id2: int = wx.ID_ANY, handler: Optional[Callable[[Event], None]] = None) -> bool',
+    c.addPyMethod('Unbind', '(self, event: PyEventBinder, source: Optional[Window, _HasGetId] = None, id: int = wx.ID_ANY, id2: int = wx.ID_ANY, handler: Optional[Callable[[Event], None]] = None) -> bool',
         doc="""\
             Disconnects the event handler binding for event from `self`.
             Returns ``True`` if successful.
