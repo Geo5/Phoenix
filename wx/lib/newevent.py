@@ -108,9 +108,32 @@ __author__ = "Miki Tebeka <miki.tebeka@gmail.com>"
 
 import wx
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    # Create a dummy subclass of PyEvent and PyCommandEvent which allow arbitrary attributes on __init__
+    # They are only used for type checking purposes and are not the actual runtime types.
+    # Because they only occur in annotations, which are stringified through the __future__ import, this
+    # does not crash at runtime.
+    class PyEventSubclass(wx.PyEvent):
+        """This is a "virtual" subclass of wx.PyEvent which is not the real run time type
+        created by NewEvent(), but improves the type checking experience.
+
+        Can set arbitrary attributes via __init__.
+        """
+        def __init__(self, **kwargs: object) -> None: ...
+
+    class PyCommandEventSubclass(wx.PyEvent):
+        """This is a "virtual" subclass of wx.PyCommandEvent which is not the real run time type
+        created by NewCommandEvent(), but improves the type checking experience.
+
+        Can set arbitrary attributes via __init__.
+        """
+        def __init__(self, id: int, **kwargs: object) -> None: ...
+
 #---------------------------------------------------------------------------
 
-def NewEvent() -> tuple[wx.PyEvent, wx.PyEventBinder]:
+def NewEvent() -> tuple[type[PyEventSubclass], wx.PyEventBinder]:
     """
     Generates a new `(event, binder)` tuple.
 
@@ -128,10 +151,10 @@ def NewEvent() -> tuple[wx.PyEvent, wx.PyEventBinder]:
             self.SetEventType(evttype)
             self._getAttrDict().update(kw)
 
-    return _Event, wx.PyEventBinder(evttype)
+    return _Event, wx.PyEventBinder(evttype) # type: ignore
 
 
-def NewCommandEvent() -> tuple[wx.PyCommandEvent, wx.PyEventBinder]:
+def NewCommandEvent() -> tuple[type[PyCommandEventSubclass], wx.PyEventBinder]:
     """
     Generates a new `(command_event, binder)` tuple.
 
@@ -148,7 +171,7 @@ def NewCommandEvent() -> tuple[wx.PyCommandEvent, wx.PyEventBinder]:
             wx.PyCommandEvent.__init__(self, evttype, id)
             self._getAttrDict().update(kw)
 
-    return _Event, wx.PyEventBinder(evttype, 1)
+    return _Event, wx.PyEventBinder(evttype, 1) # type: ignore
 
 
 #---------------------------------------------------------------------------

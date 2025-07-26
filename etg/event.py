@@ -104,6 +104,12 @@ def run():
     item = module.find('wxEventType')
     item.docAsNewType = True
 
+    # This type var is need to correctly/permissibly type the event handler callbacks. If we were to
+    # just specify the callback parameter as `Event` then you could no supply a callback which takes
+    # an event subclass (ListEvent etc).
+    module.addPyCode("""\
+    _E = TypeVar("_E", bound=Event)
+    """)
     module.addPyClass('PyEventBinder', ['object'],
         doc="""\
             Instances of this class are used to bind specific events to event handlers.
@@ -121,14 +127,14 @@ def run():
                         self.evtType = [evtType]
                     """),
 
-            PyFunctionDef('Bind', '(self, target: EventHandler, id1: int, id2: int, function: Optional[Callable[[Event], None]]) -> None',
+            PyFunctionDef('Bind', '(self, target: EventHandler, id1: int, id2: int, function: Optional[Callable[[_E], None]]) -> None',
                 doc="""Bind this set of event types to target using its Connect() method.""",
                 body="""\
                     for et in self.evtType:
                         target.Connect(id1, id2, et, function)
                     """),
 
-            PyFunctionDef('Unbind', '(self, target: EventHandler, id1: int, id2: int, handler: Optional[Callable[[Event], None]] = None) -> bool',
+            PyFunctionDef('Unbind', '(self, target: EventHandler, id1: int, id2: int, handler: Optional[Callable[[_E], None]] = None) -> bool',
                 doc="""Remove an event binding.""",
                 body="""\
                     success = 0
@@ -294,16 +300,15 @@ def run():
     c.find('SafelyProcessEvent').releaseGIL()
     c.find('ProcessPendingEvents').releaseGIL()
 
+    module.addPyCode('''\
+    class _HasGetId(typing.Protocol):
+        """This is just used for type hinting the Bind(...) and similar functions `source` parameter."""
 
-    module.addPyCode('''
-class _HasGetId(typing.Protocol):
-    """This is just used for type hinting the Bind(...) and similar functions `source` parameter."""
-
-    def GetId(self) -> int: ...
-''', order=10)
+        def GetId(self) -> int: ...
+    ''')
     # We keep the explicit Window annotation for the source parameter although window also conforms
     # to the _HasGetId protocol to not confuse user too much (hopefully).
-    c.addPyMethod('Bind', '(self, event: PyEventBinder, handler: Optional[Callable[[Event], None]], source: Optional[Window, _HasGetId] = None, id: int = wx.ID_ANY, id2: int = wx.ID_ANY) -> None',
+    c.addPyMethod('Bind', '(self, event: PyEventBinder, handler: Optional[Callable[[_E], None]], source: Optional[Window, _HasGetId] = None, id: int = wx.ID_ANY, id2: int = wx.ID_ANY) -> None',
         doc="""\
             Bind an event to an event handler.
 
@@ -339,7 +344,7 @@ class _HasGetId(typing.Protocol):
             """)
 
 
-    c.addPyMethod('Unbind', '(self, event: PyEventBinder, source: Optional[Window, _HasGetId] = None, id: int = wx.ID_ANY, id2: int = wx.ID_ANY, handler: Optional[Callable[[Event], None]] = None) -> bool',
+    c.addPyMethod('Unbind', '(self, event: PyEventBinder, source: Optional[Window, _HasGetId] = None, id: int = wx.ID_ANY, id2: int = wx.ID_ANY, handler: Optional[Callable[[_E], None]] = None) -> bool',
         doc="""\
             Disconnects the event handler binding for event from `self`.
             Returns ``True`` if successful.

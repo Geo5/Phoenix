@@ -292,8 +292,8 @@ def run():
 
     # We do need to import typing here, as a few things also need to be available at runtime in core.py
     # The typing imports added by pi_generator.py are only available in .pyi files.
-    module.addPyCode("""
-        from typing import Callable, Generic, Optional TypeVar
+    module.addPyCode("""\
+        from typing import Callable, Generic, Optional, TypeVar
         try:
             # ParamSpec was added in python 3.10
             from typing import ParamSpec
@@ -303,10 +303,10 @@ def run():
         order=10,
     )
     module.addPyCode("""\
-        _T = TypeVar('_T')
-        _P = ParamSpec('_P')
+        _T = TypeVar("_T")
+        _P = ParamSpec("_P")
         """)
-    module.addPyFunction('CallAfter', '(callableObj: Callable[_P, _T], *args: _P.args, **kw: _P.kwargs) -> None', doc="""\
+    module.addPyFunction('CallAfter', '(callableObj: Callable[_P, Optional[_T]], *args: _P.args, **kw: _P.kwargs) -> None', doc="""\
             Call the specified function after the current and pending event
             handlers have been completed.  This is also good for making GUI
             method calls from non-GUI threads.  Any extra positional or
