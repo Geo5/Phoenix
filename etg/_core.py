@@ -248,7 +248,7 @@ INCLUDES = [  # base and core stuff
 # sources and/or additional dependencies when building this extension module.
 ETGFILES = ['etg/%s.py' % NAME] + tools.getEtgFiles(INCLUDES)
 DEPENDS = tools.getNonEtgFiles(INCLUDES)
-OTHERDEPS = [ 'src/core_ex.py',
+OTHERDEPS = [ 'src/core_ex.py', 'src/core_ex.pyi', 
               'src/core_ex.cpp' ]
 
 
@@ -267,7 +267,8 @@ def run():
     module.addHeaderCode('#include <wxPython/wxpy_api.h>')
 
     module.addInclude(INCLUDES)
-    module.includePyCode('src/core_ex.py', order=10)
+    module.includePyCode('src/core_ex.py', order=10, include_in_pyi=False)
+    module.includePyiCode('src/core_ex.pyi', order=10)
 
     module.addPyFunction('version', '() -> str',
         doc="""Returns a string containing version and port info""",
@@ -471,9 +472,9 @@ def run():
     module.addPyCode("FutureCall = deprecated(CallLater, 'Use CallLater instead.')")
 
     module.addPyCode("""\
+        @deprecatedMsg("wxPython now always uses utf-8")
         def GetDefaultPyEncoding() -> str:
             return "utf-8"
-        GetDefaultPyEncoding = deprecated(GetDefaultPyEncoding, msg="wxPython now always uses utf-8")
         """)
 
     module.addCppFunction('bool', 'IsMainThread', '()',

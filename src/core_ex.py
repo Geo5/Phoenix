@@ -1,5 +1,4 @@
 import sys as _sys
-import typing
 
 # Load version numbers from __version__ and some other initialization tasks...
 if 'wxEVT_NULL' in dir():
@@ -34,95 +33,85 @@ warnings.simplefilter('default', wxPyDeprecationWarning)
 del warnings
 
 
+def deprecated(item, msg='', useName=False):
+    """
+    Create a delegating wrapper that raises a deprecation warning.  Can be
+    used with callable objects (functions, methods, classes) or with
+    properties.
+    """
+    import warnings
 
-if typing.TYPE_CHECKING:
-    from typing_extensions import deprecated as warn_deprecated
-        
-    # Make the type checker understand this statically as well
-    deprecated = warn_deprecated("")
-    deprecatedMsg = warn_deprecated
+    name = ''
+    if useName:
+        try:
+            name = ' ' + item.__name__
+        except AttributeError:
+            pass
 
-else:
-    _T = typing.TypeVar('_T')
+    if isinstance(item, type):
+        # It is a class.  Make a subclass that raises a warning.
+        class DeprecatedClassProxy(item):
+            def __init__(*args, **kw):
+                warnings.warn("Using deprecated class%s. %s" % (name, msg),
+                          wxPyDeprecationWarning, stacklevel=2)
+                item.__init__(*args, **kw)
+        DeprecatedClassProxy.__name__ = item.__name__
+        return DeprecatedClassProxy
 
-    def deprecated(item: _T, msg: str = '', useName: bool = False) -> _T:
-        """
-        Create a delegating wrapper that raises a deprecation warning.  Can be
-        used with callable objects (functions, methods, classes) or with
-        properties.
-        """
-        import warnings
+    elif callable(item):
+        # wrap a new function around the callable
+        def deprecated_func(*args, **kw):
+            warnings.warn("Call to deprecated item%s. %s" % (name, msg),
+                          wxPyDeprecationWarning, stacklevel=2)
+            if not kw:
+                return item(*args)
+            return item(*args, **kw)
+        deprecated_func.__name__ = item.__name__
+        deprecated_func.__doc__ = item.__doc__
+        if hasattr(item, '__dict__'):
+            deprecated_func.__dict__.update(item.__dict__)
+        return deprecated_func
 
-        name = ''
-        if useName:
-            try:
-                name = ' ' + item.__name__
-            except AttributeError:
-                pass
+    elif hasattr(item, '__get__'):
+        # it should be a property if there is a getter
+        class DepGetProp(object):
+            def __init__(self, item, msg):
+                self.item = item
+                self.msg = msg
+            def __get__(self, inst, klass):
+                warnings.warn("Accessing deprecated property. %s" % msg,
+                              wxPyDeprecationWarning, stacklevel=2)
+                return self.item.__get__(inst, klass)
+        class DepGetSetProp(DepGetProp):
+            def __set__(self, inst, val):
+                warnings.warn("Accessing deprecated property. %s" % msg,
+                              wxPyDeprecationWarning, stacklevel=2)
+                return self.item.__set__(inst, val)
+        class DepGetSetDelProp(DepGetSetProp):
+            def __delete__(self, inst):
+                warnings.warn("Accessing deprecated property. %s" % msg,
+                              wxPyDeprecationWarning, stacklevel=2)
+                return self.item.__delete__(inst)
 
-        if isinstance(item, type):
-            # It is a class.  Make a subclass that raises a warning.
-            class DeprecatedClassProxy(item):
-                def __init__(*args, **kw):
-                    warnings.warn("Using deprecated class%s. %s" % (name, msg),
-                            wxPyDeprecationWarning, stacklevel=2)
-                    item.__init__(*args, **kw)
-            DeprecatedClassProxy.__name__ = item.__name__
-            return DeprecatedClassProxy
-
-        elif callable(item):
-            # wrap a new function around the callable
-            def deprecated_func(*args, **kw):
-                warnings.warn("Call to deprecated item%s. %s" % (name, msg),
-                            wxPyDeprecationWarning, stacklevel=2)
-                if not kw:
-                    return item(*args)
-                return item(*args, **kw)
-            deprecated_func.__name__ = item.__name__
-            deprecated_func.__doc__ = item.__doc__
-            if hasattr(item, '__dict__'):
-                deprecated_func.__dict__.update(item.__dict__)
-            return deprecated_func
-
-        elif hasattr(item, '__get__'):
-            # it should be a property if there is a getter
-            class DepGetProp(object):
-                def __init__(self, item, msg):
-                    self.item = item
-                    self.msg = msg
-                def __get__(self, inst, klass):
-                    warnings.warn("Accessing deprecated property. %s" % msg,
-                                wxPyDeprecationWarning, stacklevel=2)
-                    return self.item.__get__(inst, klass)
-            class DepGetSetProp(DepGetProp):
-                def __set__(self, inst, val):
-                    warnings.warn("Accessing deprecated property. %s" % msg,
-                                wxPyDeprecationWarning, stacklevel=2)
-                    return self.item.__set__(inst, val)
-            class DepGetSetDelProp(DepGetSetProp):
-                def __delete__(self, inst):
-                    warnings.warn("Accessing deprecated property. %s" % msg,
-                                wxPyDeprecationWarning, stacklevel=2)
-                    return self.item.__delete__(inst)
-
-            if hasattr(item, '__set__') and hasattr(item, '__delete__'):
-                return DepGetSetDelProp(item, msg)
-            elif hasattr(item, '__set__'):
-                return DepGetSetProp(item, msg)
-            else:
-                return DepGetProp(item, msg)
+        if hasattr(item, '__set__') and hasattr(item, '__delete__'):
+            return DepGetSetDelProp(item, msg)
+        elif hasattr(item, '__set__'):
+            return DepGetSetProp(item, msg)
         else:
-            raise TypeError("unsupported type %s" % type(item))
+            return DepGetProp(item, msg)
+    else:
+        raise TypeError("unsupported type %s" % type(item))
 
-    def deprecatedMsg(msg: str) -> typing.Callable[[_T], _T]:
-        """
-        A wrapper for the deprecated decorator that makes it easier to attach a
-        custom message to the warning that is raised if the item is used. This
-        can also be used in the @decorator role since it returns the real
-        decorator when called.
-        """
-        import functools
-        return functools.partial(deprecated, msg=msg, useName=True)
+
+def deprecatedMsg(msg):
+    """
+    A wrapper for the deprecated decorator that makes it easier to attach a
+    custom message to the warning that is raised if the item is used. This
+    can also be used in the @decorator role since it returns the real
+    decorator when called.
+    """
+    import functools
+    return functools.partial(deprecated, msg=msg, useName=True)
 
 #----------------------------------------------------------------------------
 
