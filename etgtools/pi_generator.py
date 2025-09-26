@@ -383,6 +383,8 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
     #-----------------------------------------------------------------------
     def generatePyCode(self, pc, stream, indent=''):
         assert isinstance(pc, extractors.PyCodeDef)
+        if not pc.include_in_pyi:
+            return
         code = pc.code
         if hasattr(pc, 'klass'):
             code = code.replace(pc.klass.pyName+'.', '')

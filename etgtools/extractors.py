@@ -1364,10 +1364,15 @@ class PyCodeDef(BaseDef):
     This code held by this class will be written to a Python module
     that wraps the import of the extension module.
     """
-    def __init__(self, code, order=None, **kw):
+    def __init__(self, code, order=None, include_in_py=True, include_in_pyi=True, **kw):
         super(PyCodeDef, self).__init__()
         self.code = code
         self.order = order
+        assert include_in_py or include_in_pyi, "Found useless PyCodeDef"
+        # Wether to include the code in normal .py files. This can be usefull to disable together
+        # with enabling `self.include_in_pyi` to add some typing-only code.
+        self.include_in_py = include_in_py
+        self.include_in_pyi = include_in_pyi
         self.__dict__.update(kw)
 
 
@@ -1658,11 +1663,11 @@ class ModuleDef(BaseDef):
         return md
 
 
-    def addPyCode(self, code, order=None, **kw):
+    def addPyCode(self, code, order=None, include_in_py=True, include_in_pyi=True, **kw):
         """
         Add a snippet of Python code to the wrapper module.
         """
-        pc = PyCodeDef(code, order, **kw)
+        pc = PyCodeDef(code, order, include_in_py, include_in_pyi, **kw)
         self.items.append(pc)
         return pc
 
@@ -1683,7 +1688,7 @@ class ModuleDef(BaseDef):
         return gv
 
 
-    def includePyCode(self, filename, order=None):
+    def includePyCode(self, filename, order=None, include_in_pyi=True):
         """
         Add a snippet of Python code from a file to the wrapper module.
         """
@@ -1693,8 +1698,24 @@ class ModuleDef(BaseDef):
             "#" + '-=' * 38 + '\n' +
             ("# This code block was included from %s\n%s\n" % (filename, text)) +
             "# End of included code block\n"
-            "#" + '-=' * 38 + '\n'            ,
-            order
+            "#" + '-=' * 38 + '\n',
+            order,
+            include_in_pyi=include_in_pyi,
+            )
+
+    def includePyiCode(self, filename, order=None):
+        """
+        Add a snippet of Python code from a file to the wrapper module to be included only in *.pyi files.
+        """
+        with textfile_open(filename) as fid:
+            text = fid.read()
+        return self.addPyCode(
+            "#" + '-=' * 38 + '\n' +
+            ("# This code block was included from %s\n%s\n" % (filename, text)) +
+            "# End of included code block\n"
+            "#" + '-=' * 38 + '\n',
+            order,
+            include_in_py=False,
             )
 
 
