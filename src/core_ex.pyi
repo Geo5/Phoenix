@@ -1,4 +1,3 @@
-from typing import Final, Literal
 from typing_extensions import deprecated as warn_deprecated
 
 from wx.__version__ import VERSION_STRING

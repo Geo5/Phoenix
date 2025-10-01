@@ -301,11 +301,11 @@ def run():
     c.find('ProcessPendingEvents').releaseGIL()
 
     module.addPyCode('''\
-    class _HasGetId(typing.Protocol):
+    class _HasGetId(Protocol):
         """This is just used for type hinting the Bind(...) and similar functions `source` parameter."""
 
         def GetId(self) -> int: ...
-    ''')
+    ''', include_in_py=False)
     # We keep the explicit Window annotation for the source parameter although window also conforms
     # to the _HasGetId protocol to not confuse user too much (hopefully).
     c.addPyMethod('Bind', '(self, event: PyEventBinder, handler: Optional[Callable[[_E], None]], source: Optional[Window, _HasGetId] = None, id: int = wx.ID_ANY, id2: int = wx.ID_ANY) -> None',
