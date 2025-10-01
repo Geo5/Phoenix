@@ -514,13 +514,16 @@ class FunctionDef(BaseDef, FixWxPrefix):
                 if default == 'None':
                     params[-1].make_optional()
         else:
-            for param in self.items:
+            for p_idx, param in enumerate(self.items):
                 assert isinstance(param, ParamDef)
                 if param.ignored:
                     continue
                 if param.arraySize:
                     continue
                 s, param_type = self.parseNameAndType(param.pyName or param.name, param.type, not param.out)
+                # Python cannot have empty parameter names!
+                if not s:
+                    s = f"_param_{p_idx}"
                 if param.out:
                     if param_type:
                         returns.append(param_type)
