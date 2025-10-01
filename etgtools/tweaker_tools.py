@@ -290,18 +290,25 @@ class FixWxPrefix(object):
             json.dump(FixWxPrefix._auto_conversions, f)
 
     @classmethod
-    def register_autoconversion(cls, class_name: str, convertables: tuple[str, ...]) -> None:
-        cls._auto_conversions[class_name] = convertables
+    def register_autoconversion(cls, class_name: str, convertibles: tuple[str, ...]) -> None:
+        cls._auto_conversions[class_name] = convertibles
 
     @classmethod
-    def get_auto_conversions(cls, type: str) -> tuple[str, ...]:
+    def get_auto_conversions(cls, type_name: str) -> tuple[str, ...]:
         """Returns auto convertible types for given type.
 
         Removes wx prefix if present. 
         """
-        if type.startswith('wx.'):
-            type = type[3:]
-        return cls._auto_conversions.get(type, ())
+        if type_name.startswith('wx.'):
+            type_name = type_name[3:]
+        conversions=  cls._auto_conversions.get(type_name, ())
+        # We need to deduplicate here, as at least wx.Colour is convertible from itself, so would
+        # should up twice in the resulting Union otherwise.
+        if ("wx." + type_name) in conversions:
+            idx = conversions.index("wx." + type_name)
+            conversions = conversions[:idx] + conversions[idx+1:]
+        return conversions
+
 
     def fixWxPrefix(self, name, checkIsCore=False):
         # By default remove the wx prefix like normal
@@ -440,15 +447,19 @@ class FixWxPrefix(object):
                 return f'list[{type_name}]'
             else:
                 return 'list'
-        allowed_types = self.get_auto_conversions(type_name)
-        if allowed_types and is_input:
-            allowed_types = (
-                type_name,
-                # Special case None here, as it already is a clean type in this context and
-                # otherwise a underscore is added.
-                *(t if t == 'None' else self.cleanType(t) for t in allowed_types),
-            )
-            type_name = f"Union[{', '.join(allowed_types)}]"
+        convertible_types = self.get_auto_conversions(type_name)
+        if convertible_types and is_input:
+            # We remove the wx. prefix if we are processing the core module here. 
+            if self.isCore:
+                convertible_types = tuple(t[3:] if t.startswith("wx.") else t for t in convertible_types)
+            cleaned_types = [type_name]
+            for conv_type in convertible_types:
+                # These types are available in every .pyi files, because they are added in the header in pi_generator.py, so we don't recurse deeper here.
+                if conv_type in {"_TwoInts", "_ThreeInts", "_FourInts", "_TwoFloats", "_FourFloats", "None"}:
+                    cleaned_types.append(conv_type)
+                else:
+                    cleaned_types.append(self.cleanType(conv_type))
+            type_name = f"Union[{', '.join(cleaned_types)}]"
         return type_map.get(type_name, type_name)
     
     def parseNameAndType(self, name_string: str, type_string: Optional[str], is_input: bool = False) -> tuple[str, Optional[str]]:
