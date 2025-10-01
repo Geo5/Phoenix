@@ -363,14 +363,14 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
         # Now write the Python equivalent class for the typedef
         if not bases:
             bases = ['object']  # this should not happen, but just in case...
-        stream.write('%sclass %s(%s):\n' % (indent, name, ', '.join(bases)))
-        indent2 = indent + ' '*4
+        stream.write('%sclass %s(%s):' % (indent, name, ', '.join(bases)))
         if typedef.briefDoc:
-            stream.write('%s"""\n' % indent2)
+            indent2 = indent + ' '*4
+            stream.write('\n%s"""\n' % indent2)
             stream.write(nci(typedef.briefDoc, len(indent2)))
             stream.write('%s"""\n' % indent2)
         else:
-            stream.write('%spass\n\n' % indent2)
+            stream.write(' ...\n\n')
 
 
     #-----------------------------------------------------------------------
@@ -402,13 +402,14 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
                 stream.write('%s@wx.deprecated\n' % indent)
         if pf.isStatic:
             stream.write('%s@staticmethod\n' % indent)
-        stream.write('%sdef %s%s:\n' % (indent, pf.name, pf.argsString))
-        indent2 = indent + ' '*4
+        stream.write('%sdef %s%s:' % (indent, pf.name, pf.argsString))
         if pf.briefDoc:
-            stream.write('%s"""\n' % indent2)
+            indent2 = indent + ' '*4
+            stream.write('\n%s"""\n' % indent2)
             stream.write(nci(pf.briefDoc, len(indent2)))
             stream.write('%s"""\n' % indent2)
-        stream.write('%spass\n' % indent2)
+        else:
+            stream.write(' ...\n')
 
     #-----------------------------------------------------------------------
     def generatePyClass(self, pc, stream, indent=''):
@@ -464,13 +465,16 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
         for line in function.signature.definition_lines():
             stream.write(f'\n{line}')
         if is_overload:
-            stream.write('    ...\n')
+            stream.write(' ...')
         else:
-            # Docstring on next line
-            stream.write('\n')
-            stream.write('    """\n')
-            stream.write(nci(function.pyDocstring, 4))
-            stream.write('    """\n')
+            if function.pyDocstring:
+                # Docstring on next line
+                stream.write('\n')
+                stream.write('    """\n')
+                stream.write(nci(function.pyDocstring, 4))
+                stream.write('    """\n')
+            else:
+                stream.write(' ...')
 
 
     def generateParameters(self, parameters, stream, indent):
@@ -575,7 +579,7 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
             f = dispatch[item.__class__]
             f(item, stream, indent2)
 
-        stream.write('%s# end of class %s\n\n' % (indent, klassName))
+        stream.write('\n%s# end of class %s\n\n' % (indent, klassName))
 
 
     def find_method(self, klass: extractors.ClassDef, method_name: str) -> Optional[extractors.MethodDef]:
@@ -596,7 +600,7 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
             member_type = self.cleanType(member_type)
         if not member_type: # Unknown type for the member variable
             member_type = 'Any'
-        stream.write(f'{indent}{memberVar.name}: {member_type}\n')
+        stream.write(f'\n{indent}{memberVar.name}: {member_type}')
 
 
     def generateProperty(self, klass, prop, stream, indent):
@@ -648,21 +652,21 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
                 return_type = value_type
         if prop.setter and prop.getter:
             if value_type and return_type:
-                stream.write(f'{indent}@property\n')
-                stream.write(f'{indent}def {prop.name}(self) -> {return_type}: ...\n')
-                stream.write(f'{indent}@{prop.name}.setter\n')
-                stream.write(f'{indent}def {prop.name}(self, value: {value_type}, /) -> None: ...\n')
+                stream.write(f'\n{indent}@property')
+                stream.write(f'\n{indent}def {prop.name}(self) -> {return_type}: ...')
+                stream.write(f'\n{indent}@{prop.name}.setter')
+                stream.write(f'\n{indent}def {prop.name}(self, value: {value_type}, /) -> None: ...')
             else:
-                stream.write(f'{indent}{prop.name} = property({prop.getter}, {prop.setter})\n')
+                stream.write(f'\n{indent}{prop.name} = property({prop.getter}, {prop.setter})')
         elif prop.getter:
             if value_type:
-                stream.write(f'{indent}@property\n')
-                stream.write(f'{indent}def {prop.name}(self) -> {return_type}: ...\n')
+                stream.write(f'\n{indent}@property')
+                stream.write(f'\n{indent}def {prop.name}(self) -> {return_type}: ...')
             else:
-                stream.write(f'{indent}{prop.name} = property({prop.getter})\n')
+                stream.write(f'\n{indent}{prop.name} = property({prop.getter})')
         elif prop.setter:
             # Can't use the decorator syntax in this situation
-            stream.write(f'{indent}{prop.name} = property(fset={prop.setter})\n') 
+            stream.write(f'\n{indent}{prop.name} = property(fset={prop.setter})') 
 
 
     def generateMethod(self, method, stream, indent, name=None, docstring=None, is_overload=False, is_top_level_init=False):
@@ -703,22 +707,24 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
             method.signature['parent'].make_optional()
         for line in method.signature.definition_lines():
             stream.write(f'\n{indent}{line}')
-        stream.write('\n')
-        indent2 = indent + ' '*4
-
         # docstring
         if is_overload:
-            stream.write(f'{indent2}...\n')
+            stream.write(' ...')
         else:
             if not docstring:
                 if hasattr(method, 'pyDocstring'):
                     docstring = method.pyDocstring
                 else:
                     docstring = ""
-            stream.write('%s"""\n' % indent2)
-            if docstring.strip():
-                stream.write(nci(docstring, len(indent2)))
-            stream.write('%s"""\n' % indent2)
+            if docstring:
+                indent2 = indent + ' '*4
+                stream.write('\n')
+                stream.write('%s"""\n' % indent2)
+                if docstring.strip():
+                    stream.write(nci(docstring, len(indent2)))
+                stream.write('%s"""\n' % indent2)
+            else:
+                stream.write(' ...')
 
 
 
@@ -740,12 +746,15 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
             stream.write('\n%s@staticmethod' % indent)
         stream.write('\n%sdef %s' % (indent, pm.name))
         stream.write(getattr(pm, 'piArgsString', pm.argsString))
-        stream.write(':\n')
+        stream.write(':')
         indent2 = indent + ' '*4
 
-        stream.write('%s"""\n' % indent2)
-        stream.write(nci(pm.pyDocstring, len(indent2)))
-        stream.write('%s"""\n' % indent2)
+        if pm.pyDocstring:
+            stream.write('\n%s"""\n' % indent2)
+            stream.write(nci(pm.pyDocstring, len(indent2)))
+            stream.write('%s"""\n' % indent2)
+        else:
+            stream.write(' ...')
 
 
 
