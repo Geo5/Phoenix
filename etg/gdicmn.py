@@ -118,6 +118,10 @@ def run():
     c.addPyMethod('__repr__', '(self) -> str',            'return "wx.Point"+str(self.Get())')
     c.addPyMethod('__len__', '(self) -> Literal[2]',      'return len(self.Get())')
     c.addPyMethod('__reduce__', '(self) -> tuple[type[Point], _TwoInts]', 'return (Point, self.Get())')
+    # Type checkers generally don't really understand a type as iterable without an explicit
+    # `__iter__` method, although `__getitem__` is enough for this at runtime. So just add an
+    # explicit iter method to make life easier. See https://github.com/python/mypy/issues/2220
+    c.addPyMethod('__iter__', '(self) -> Iterator[int]', 'return iter((self[0], self[1]))')
     c.addPyMethod('__getitem__', '(self, idx: Literal[0, 1]) -> int', 'return self.Get()[idx]')
     c.addPyMethod('__setitem__', '(self, idx: Literal[0, 1], val: int) -> None',
                   """\
@@ -196,6 +200,10 @@ def run():
     c.addPyMethod('__nonzero__', '(self) -> bool',        'return self.Get() != (0,0)')
     c.addPyMethod('__bool__', '(self) -> bool',           'return self.Get() != (0,0)')
     c.addPyMethod('__reduce__', '(self) -> tuple[type[Size], _TwoInts]', 'return (Size, self.Get())')
+    # Type checkers generally don't really understand a type as iterable without an explicit
+    # `__iter__` method, although `__getitem__` is enough for this at runtime. So just add an
+    # explicit iter method to make life easier. See https://github.com/python/mypy/issues/2220
+    c.addPyMethod('__iter__', '(self) -> Iterator[int]', 'return iter((self[0], self[1]))')
     c.addPyMethod('__getitem__', '(self, idx: Literal[0, 1]) -> int', 'return self.Get()[idx]')
     c.addPyMethod('__setitem__', '(self, idx: Literal[0, 1], val: int) -> None',
                   """\
@@ -278,6 +286,10 @@ def run():
     c.addPyMethod('__nonzero__', '(self) -> bool',        'return self.Get() != (0,0,0,0)')
     c.addPyMethod('__bool__', '(self) -> bool',           'return self.Get() != (0,0,0,0)')
     c.addPyMethod('__reduce__', '(self) -> tuple[type[Rect], _FourInts]', 'return (Rect, self.Get())')
+    # Type checkers generally don't really understand a type as iterable without an explicit
+    # `__iter__` method, although `__getitem__` is enough for this at runtime. So just add an
+    # explicit iter method to make life easier. See https://github.com/python/mypy/issues/2220
+    c.addPyMethod('__iter__', '(self) -> Iterator[int]', 'return iter((self[0], self[1], self[2], self[3]))')
     c.addPyMethod('__getitem__', '(self, idx: Literal[0, 1, 2, 3]) -> int', 'return self.Get()[idx]')
     c.addPyMethod('__setitem__', '(self, idx: Literal[0, 1, 2, 3], val: int) -> None',
                   """\
@@ -340,6 +352,10 @@ def run():
     c.addPyMethod('__nonzero__', '(self) -> bool',        'return self.Get() != (0,0)')
     c.addPyMethod('__bool__', '(self) -> bool',           'return self.Get() != (0,0)')
     c.addPyMethod('__reduce__', '(self) -> tuple[type[RealPoint], _TwoFloats]', 'return (RealPoint, self.Get())')
+    # Type checkers generally don't really understand a type as iterable without an explicit
+    # `__iter__` method, although `__getitem__` is enough for this at runtime. So just add an
+    # explicit iter method to make life easier. See https://github.com/python/mypy/issues/2220
+    c.addPyMethod('__iter__', '(self) -> Iterator[float]', 'return iter((self[0], self[1]))')
     c.addPyMethod('__getitem__', '(self, idx: Literal[0, 1]) -> float', 'return self.Get()[idx]')
     c.addPyMethod('__setitem__', '(self, idx: Literal[0, 1], val: float) -> None',
                   """\

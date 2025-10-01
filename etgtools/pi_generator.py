@@ -86,6 +86,7 @@ from typing import (
     Any,
     Callable,
     Generic,
+    Iterator,
     Literal,
     NewType,
     Optional,
